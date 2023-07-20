@@ -23,6 +23,8 @@ from spectral_cube import SpectralCube
 from pvextractor import extract_pv_slice, Path, PathFromCenter
 import radmc3dPy.image as image
 from plot_helpers import plot_1d_props
+#for the noise 
+from ngVLA_sensitivity_calculator import *
 
 def freq2vel(freq, freq_0):
     return (freq_0 - freq) * (cts.c.cgs.to(asu.km/asu.s)) / freq_0
@@ -44,7 +46,7 @@ def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 36
     n_inf = line_prop["ninf"]
     line_freq = line_prop["Frequency_radmc"]
     #print ("control: velocity line", freq2vel(line_freq,line_freq))
-    channel_width_vel = channel_width_0 * asu.km/asu.s
+    channel_width_vel = channel_width * asu.km/asu.s
     channel_width_freq_0 = vel2freq(channel_width_vel,line_freq*asu.Hz)
     channel_width_freq = line_freq*asu.Hz - channel_width_freq_0 
     print ("channel width {} or {}".format(channel_width_vel, channel_width_freq.to(asu.MHz)))
@@ -116,11 +118,13 @@ def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 36
     #Noise calculation
     #------  noises
     #continuum 
-    a_cont,b_cont,c_cont = sigma_ps_fn("main+lba",  freq=frequency,type_cal = 'continuum', theta=beam[0],t_int=time_int, delta_v=channel_width_0*1e3, verbose=True )
-    noise_input_continuum = a_cont[1]
+    a_cont,b_cont,c_cont = sigma_ps_fn("main+lba",  freq=frequency,type_cal = 'continuum', theta=beam[0],t_int=time_int, delta_v=channel_width*1e3, verbose=True )
+    noise_input_continuum = a_cont[1]*1e-6   #Jy/beam  #original in uJy/beam
+    print ("the continuum noise = {}".format(noise_input_continuum))
     #line
     a_line,b_line,c_line = sigma_ps_fn("main+lba",  freq=frequency, type_cal = 'line', theta=beam[0],t_int=time_int, delta_v=channel_width*1e3, verbose=True )
-    noise_input_line = a_line[1] 
+    noise_input_line = a_line[1]*1e-6     #Jy/beam  #original in uJy/beam
+    print ("the line noise = {}".format(noise_input_line))
     #a[0] = ""#frequency
     #a[1] is the simga_rms
     #a[2] is the T_rms
