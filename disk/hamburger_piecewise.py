@@ -7,7 +7,7 @@
 import sys
 sys.path.append('/fs/posgrado30/other0/opt/star-forming-regions')
 sys.path.append('/fs/posgrado30/other0/jesus/radmc3dPy/lib/python3.9/site-packages')
-
+sys.path.append("/fs/posgrado30/other0/jesus/paper2/ngVLA_SF_regions")
 import sf3dmodels
 import astropy.wcs as wcs
 from astropy.io import fits
@@ -36,7 +36,6 @@ import time
 import astropy.units as asu
 import astropy.constants as cts
 import pandas as pd
-sys.path.append("/home/jesus/Documents/paper2/ngVLA_SF_regions")
 from utils_run_radmc import *
 
 #------------------

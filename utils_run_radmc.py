@@ -39,8 +39,8 @@ def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 36
     noise in Jy/beam
     '''
     t0 = time.time()
-    radmc_path = "/home/jesus/radmc-3d/version_0.40/examples/run_recomblines_userdef"
-    #radmc_path = "/fs/posgrado30/other0/jesus/radmc-3d/version_0.40/examples/run_recomblines_userdef"
+    #radmc_path = "/home/jesus/radmc-3d/version_0.40/examples/run_recomblines_userdef"
+    radmc_path = "/fs/posgrado30/other0/jesus/radmc-3d/version_0.40/examples/run_recomblines_userdef"
     #-------------------------------
     n_sup = line_prop["nsup"]
     n_inf = line_prop["ninf"]
