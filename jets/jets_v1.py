@@ -29,7 +29,7 @@ import numpy as np
 import time
 
 ########### control
-GRID_construction = True
+GRID_construction = False
 RADMC_run = True
 
 
