@@ -20,7 +20,9 @@ from sf3dmodels.grid import Overlap           #Overlap submodels
 from radmc3dPy.image import *
 from matplotlib import cm
 from matplotlib import pyplot as plt
-sys.path.append("/home/jesus/Documents/paper2/ngVLA_SF_regions")
+#sys.path.append("/home/jesus/Documents/paper2/ngVLA_SF_regions")
+sys.path.append("/fs/posgrado30/other0/jesus/paper2/ngVLA_SF_regions")
+from plot_helpers import plot_1d_props_jets#, _props_jets
 from utils_run_radmc import *
 #********************
 #Extra libraries
@@ -46,7 +48,7 @@ if GRID_construction == True:
     #GEOMETRIC PARAMETERS
     #---------------------
     pos_c = np.array([0, 0, 0]) #Origin of coordinates on the axis.
-    axis = np.array([0,1,0])    #Long axis direction, of arbitrary length. For example, an axis pointing to the z-direction: axis = [0,0,1] 
+    axis = np.array([0,0,1])    #Long axis direction, of arbitrary length. For example, an axis pointing to the z-direction: axis = [0,0,1] 
     z_min = 25*u.au      #Lower and upper limits to compute the physical properties  # convierte au a m
     z_max = 150*u.au 
     #---------------------
@@ -114,7 +116,7 @@ if GRID_construction == True:
     #GEOMETRY
     #---------------------
     pos_c = np.array([0, 0, 0])   #[200*u.au, -50*u.au, 0]
-    axis = np.array([0,1,0])      #[1,1,-1]
+    axis = np.array([0,0,1])      #[1,1,-1]
     z_min = 3*u.au
     z_max = 150*u.au
 
@@ -166,7 +168,56 @@ if GRID_construction == True:
     radmc2 = rt.Radmc3d(Outf2.GRID)
     radmc2.submodel(prop2, output='datatab'+tag+'.dat')
     print('Output columns', radmc2.columns)
+    ####################################### plots 
+    #####################################-------------------------
+    #JOIN the JETS 
+    ########################## -----------------------------------
+    #********
+    #GRIDDING
+    #********
+    sizex = 150 * u.au       #500
+    sizey = sizez = 150 * u.au    #500
+    Nx = Ny = Nz = 300
+    GRID = Model.grid([sizex, sizey, sizez], [Nx, Ny, Nz], rt_code='radmc3d')
 
+    files = ['datatab_outflow_collimated.dat', 'datatab_outflow_conical.dat'] #
+
+    #### I add the columns for the vel_x, vel_y, vel_z in order to have the same columns that in the model disk
+    #### and to run recomblines instead that freefree in RADMC
+    columns = ['id', 'x', 'y', 'z', 'dens_ion', 'dens_e', 'temp_gas', 'vel_x', 'vel_y', 'vel_z']
+    outflows = Overlap(GRID)
+    finalprop = outflows.fromfiles(columns, submodels = files, rt_code = 'radmc3d')
+    #********
+    #PLOTTING --------------------cuidado que no se esten Mezclando las definiciones de densidad
+    #******** 
+    density = finalprop['dens_e']/ 1e6 #dens. in cm^-3  
+    temperature = finalprop['temp_gas']
+
+    weight = 100 * np.mean(density)
+    #--------------------
+    #Plot for DENSITY  2D 
+    #--------------------
+    Pm.plane2D(GRID, density, axisunit = u.au,
+                       cmap = 'jet', plane = {'z': 0*u.au},
+                       norm = "log", colorlabel = r'$[\rm cm^{-3}]$',
+                       output = 'DensMidplane_Z_%s.png'%tag, show = False)
+    Pm.plane2D(GRID, density, axisunit = u.au,
+                       cmap = 'jet', plane = {'y': 0*u.au},
+                       norm = "log", colorlabel = r'$[\rm cm^{-3}]$',
+                       output = 'DensMidplane_Y_%s.png'%tag, show = False)
+    
+    #--------------------
+    #Plot for TEMPERATURE
+    #--------------------
+    Pm.scatter3D(GRID, density, weight, colordim = temperature, NRand = 4000, axisunit = u.au, colorscale = 'log', cmap = 'brg', colorlabel = r'${\rm log}_{10}(T$ $[K])$', output = 'global_grid_temp.png', vmin = 2, show=False)
+
+    #-----------------
+    #Plot for DENSITY
+    #-----------------
+    Pm.scatter3D(GRID, density, weight, NRand = 4000, axisunit = u.au, colorscale = 'log', cmap = 'cool', colorlabel = r'${\rm log}_{10}(n [cm^{-3}])$', output = 'global_grid_dens.png', vmin = 5, show=False)
+    
+    #plot_1d_props(GRID, finalprop, density, tag='jet_model')
+    
     #-------
     #TIMING
     #-------
@@ -199,33 +250,14 @@ if RADMC_run == True:
     ###########--------------------------------------------
     # Run RADMC-3D
     
-    lines_df =  pd.read_csv("/home/jesus/Documents/paper2/Hydrogen_recom_lines_in_use.csv")
+    #lines_df =  pd.read_csv("/home/jesus/Documents/paper2/Hydrogen_recom_lines_in_use.csv")
+    lines_df =  pd.read_csv("/fs/posgrado30/other0/jesus/paper2/ngVLA_SF_regions/Hydrogen_recom_lines_in_use.csv")
     #run radmc
     i = 0   #this is the index of the line that you want to simulate.
     
-    run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(2e-3,2e-3),inclination=0,freefree=True)
+    run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(2e-3,2e-3),inclination=60,freefree=False)
     
-####################################### plots 
 
-#********
-#PLOTTING --------------------cuidado que no se esten Mezclando las definiciones de densidad
-#******** 
-density = finalprop['dens_e']/ 1e6 #dens. in cm^-3  
-temperature = finalprop['temp_gas']
-
-weight = 100 * np.mean(density)
-
-Pm.plane2D(GRID, density, axisunit = u.au,
-                   cmap = 'jet', plane = {'z': 0*u.au},
-                   norm = "log", colorlabel = r'$[\rm cm^{-3}]$',
-                   output = 'DensMidplane_%s.png'%tag, show = False)
-
-
-#-----------------
-#Plot for DENSITY
-#-----------------
-Pm.scatter3D(GRID, density, weight, NRand = 4000, axisunit = u.au, colorscale = 'log', cmap = 'cool',
-             colorlabel = r'${\rm log}_{10}(n [cm^{-3}])$', output = 'global_grid_dens.png', vmin = 5, show=False)
 
 
 
