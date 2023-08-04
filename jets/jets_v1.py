@@ -20,9 +20,9 @@ from sf3dmodels.grid import Overlap           #Overlap submodels
 from radmc3dPy.image import *
 from matplotlib import cm
 from matplotlib import pyplot as plt
-sys.path.append("/home/jesus/Documents/paper2/ngVLA_SF_regions")
+#sys.path.append("/home/jesus/Documents/paper2/ngVLA_SF_regions")
 sys.path.append("/fs/posgrado30/other0/jesus/paper2/ngVLA_SF_regions")
-from plot_helpers import plot_1d_props_jets#, _props_jets
+#from plot_helpers import plot_1d_props#, _props_jets
 from utils_run_radmc import *
 #********************
 #Extra libraries
@@ -250,17 +250,17 @@ if RADMC_run == True:
     ###########--------------------------------------------
     # Run RADMC-3D
     
-    lines_df =  pd.read_csv("/home/jesus/Documents/paper2/Hydrogen_recom_lines_in_use.csv")
-    #lines_df =  pd.read_csv("/fs/posgrado30/other0/jesus/paper2/ngVLA_SF_regions/Hydrogen_recom_lines_in_use.csv")
+    #lines_df =  pd.read_csv("/home/jesus/Documents/paper2/Hydrogen_recom_lines_in_use.csv")
+    lines_df =  pd.read_csv("/fs/posgrado30/other0/jesus/paper2/ngVLA_SF_regions/Hydrogen_recom_lines_in_use.csv")
     #run radmc
-    i = 5  #H51  #this is the index of the line that you want to simulate.
-    run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(2e-3,2e-3),inclination=60,channel_width = 10, frequency = 41)
+    i = 6  #H51  #this is the index of the line that you want to simulate.
+    run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(28e-3,28e-3),inclination=30,channel_width = 10, frequency = 41, distance = 725.0)
 
-    i = 10  #H51  #this is the index of the line that you want to simulate.
-    run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(2e-3,2e-3),inclination=60,channel_width = 10, frequency = 8)    
+    #i = 10  #H51  #this is the index of the line that you want to simulate.
+    #run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(2e-3,2e-3),inclination=60,channel_width = 10, frequency = 8)    
     
-    for i in [1,2,3,4]:
-        run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(2e-3,2e-3),inclination=60,channel_width = 10, frequency = 93)    
+    #for i in [1,2,3,4]:
+     #s   run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(2e-3,2e-3),inclination=60,channel_width = 10, frequency = 93)    
 
 
 
