@@ -20,7 +20,7 @@ from sf3dmodels.grid import Overlap           #Overlap submodels
 from radmc3dPy.image import *
 from matplotlib import cm
 from matplotlib import pyplot as plt
-#sys.path.append("/home/jesus/Documents/paper2/ngVLA_SF_regions")
+sys.path.append("/home/jesus/Documents/paper2/ngVLA_SF_regions")
 sys.path.append("/fs/posgrado30/other0/jesus/paper2/ngVLA_SF_regions")
 from plot_helpers import plot_1d_props_jets#, _props_jets
 from utils_run_radmc import *
@@ -55,7 +55,7 @@ if GRID_construction == True:
     #PHYSICAL PARAMETERS
     #---------------------
     ### I (Jaquez) put the same M_dot at in the disc
-    mdot = 1e-6*u.MSun_yr    # convierte masa solar por año a kg/s   ##va 1.5; 2 es para la propuesta   
+    mdot = 1.5e-6*u.MSun_yr    # convierte masa solar por año a kg/s   ##va 1.5; 2 es para la propuesta   
     mu = 1.6735e-27          # Kg ; masa H
     cte = 4.9975e-7
     #---------------------
@@ -99,7 +99,7 @@ if GRID_construction == True:
     #WRITING FOR RADMC3D
     #---------------------
     #Using the Radmc3d class
-    prop1 = {'vel_x' : Outf1.x, 'vel_y' : Outf1.y, 'vel_z' : Outf1.z,
+    prop1 = {'vel_x' : Outf1.vx, 'vel_y' : Outf1.vy, 'vel_z' : Outf1.vz,
              'dens_e': Outf1.density_ion,
              'dens_ion': Outf1.density_ion,
              'temp_gas': Outf1.temperature}
@@ -124,7 +124,7 @@ if GRID_construction == True:
     #PHYSICAL PARAMETERS
     #---------------------
     #also put the same accretion rate
-    mdot = 1e-6*u.MSun_yr  # convierte masa solar por año a kg/s
+    mdot = 1.75e-6*u.MSun_yr  # convierte masa solar por año a kg/s
     #---------------------
     #PHYSICAL PROPERTIES
     #---------------------
@@ -161,7 +161,7 @@ if GRID_construction == True:
     #WRITING FOR RADMC3D
     #---------------------
     #Using the Radmc3d class
-    prop2 = {'vel_x' : Outf2.x, 'vel_y' : Outf2.y, 'vel_z' : Outf2.z,
+    prop2 = {'vel_x' : Outf2.vx, 'vel_y' : Outf2.vy, 'vel_z' : Outf2.vz,
             'dens_e': Outf2.density_ion,
              'dens_ion': Outf2.density_ion,
              'temp_gas': Outf2.temperature}
@@ -250,13 +250,17 @@ if RADMC_run == True:
     ###########--------------------------------------------
     # Run RADMC-3D
     
-    #lines_df =  pd.read_csv("/home/jesus/Documents/paper2/Hydrogen_recom_lines_in_use.csv")
-    lines_df =  pd.read_csv("/fs/posgrado30/other0/jesus/paper2/ngVLA_SF_regions/Hydrogen_recom_lines_in_use.csv")
+    lines_df =  pd.read_csv("/home/jesus/Documents/paper2/Hydrogen_recom_lines_in_use.csv")
+    #lines_df =  pd.read_csv("/fs/posgrado30/other0/jesus/paper2/ngVLA_SF_regions/Hydrogen_recom_lines_in_use.csv")
     #run radmc
-    i = 0   #this is the index of the line that you want to simulate.
+    i = 5  #H51  #this is the index of the line that you want to simulate.
+    run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(2e-3,2e-3),inclination=60,channel_width = 10, frequency = 41)
+
+    i = 10  #H51  #this is the index of the line that you want to simulate.
+    run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(2e-3,2e-3),inclination=60,channel_width = 10, frequency = 8)    
     
-    run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(2e-3,2e-3),inclination=60,freefree=False)
-    
+    for i in [1,2,3,4]:
+        run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(2e-3,2e-3),inclination=60,channel_width = 10, frequency = 93)    
 
 
 
