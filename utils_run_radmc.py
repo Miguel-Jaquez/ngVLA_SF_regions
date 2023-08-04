@@ -33,14 +33,15 @@ def vel2freq(vel,freq_0):
 
 #this is a copy of create full model
 #def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),noise_input_line = 17.29055e-6, noise_input_continuum = 0.13844e-6,inclination=60,channel_width_0=4,number_channels=20):
-def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 36000, inclination=60,channel_width=4,number_channels=20,freefree=False):
+def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 3600, inclination=60,channel_width=4,number_channels=20,distance = 725.,freefree=False):
     '''
     vel_region in km/s
     noise in Jy/beam
+    distance in pc
     '''
     t0 = time.time()
-    radmc_path = "/home/jesus/radmc-3d/version_0.40/examples/run_recomblines_userdef"
-    #radmc_path = "/fs/posgrado30/other0/jesus/radmc-3d/version_0.40/examples/run_recomblines_userdef"
+    #radmc_path = "/home/jesus/radmc-3d/version_0.40/examples/run_recomblines_userdef"
+    radmc_path = "/fs/posgrado30/other0/jesus/radmc-3d/version_0.40/examples/run_recomblines_userdef"
     #-------------------------------
     n_sup = line_prop["nsup"]
     n_inf = line_prop["ninf"]
@@ -68,23 +69,27 @@ def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 36
     print ("################ Writing for RADMC-3D ####################")
     A = rt.Radmc3dDefaults(GRID)
     if freefree==True:
-        print ("Running free free ")
+        print ("Running free-free ")
         A.freefree(prop)
     else:
         print ("Running recomlines")
         A.recomblines(prop, [n_sup,n_inf], kwargs_control = {'userdef_nonlte': 1}) #Writing prop with radmc3d format, non-LTE
 
     ########################################## RADIATIVE TRANSFER WITH RADMC-3D ####################################
-    radmc_rl = os.path.join(radmc_path, 'radmc3d')
-    ##### JAQUEZ H38_\alpha -> 2600.6855 microns
-    subprocess.run(radmc_rl+' setthreads 4 image lambdarange {} {} nlam {} incl {} npix 221 sizeau 550'.format(wave_range[0],wave_range[1],number_channels,str(i)), shell=True, executable='/bin/bash') 
+    if freefree == True:
+        radmc_freefree = os.path.join(radmc_path, 'radmc3d')
+        subprocess.run()    
+    else:
+        radmc_rl = os.path.join(radmc_path, 'radmc3d')
+        ##### JAQUEZ H38_\alpha -> 2600.6855 microns
+        subprocess.run(radmc_rl+' setthreads 12 image lambdarange {} {} nlam {} incl {} npix 221 sizeau 550'.format(wave_range[0],wave_range[1],number_channels,str(i)), shell=True, executable='/bin/bash') 
      
     ################################### CONVOLUTION AND CONTINUUM SUBTRACTION ######################################
     # Use radmc3dpy to write fits file
     output = 'img_rl_disk_H{}.fits'.format(n_inf)
     #subprocess.call(['rm',output], shell=True)
     os.system('rm -f '+output)
-    dist = 5000.   #49000 = nube de magallanes
+    dist = distance #725.   #49000 = nube de magallanes
     im = image.readImage()    
     #data = im.image #Accessing image data
     #plt.imshow(data[:,:,29], origin='lower', cmap='cool') #plotting a single channel
