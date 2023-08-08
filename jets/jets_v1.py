@@ -31,7 +31,7 @@ import numpy as np
 import time
 
 ########### control
-GRID_construction = False
+GRID_construction = True
 RADMC_run = True
 
 
@@ -177,7 +177,7 @@ if GRID_construction == True:
     #********
     sizex = 150 * u.au       #500
     sizey = sizez = 150 * u.au    #500
-    Nx = Ny = Nz = 300
+    Nx = Ny = Nz = 500
     GRID = Model.grid([sizex, sizey, sizez], [Nx, Ny, Nz], rt_code='radmc3d')
 
     files = ['datatab_outflow_collimated.dat', 'datatab_outflow_conical.dat'] #
@@ -253,14 +253,14 @@ if RADMC_run == True:
     #lines_df =  pd.read_csv("/home/jesus/Documents/paper2/Hydrogen_recom_lines_in_use.csv")
     lines_df =  pd.read_csv("/fs/posgrado30/other0/jesus/paper2/ngVLA_SF_regions/Hydrogen_recom_lines_in_use.csv")
     #run radmc
-    i = 6  #H51  #this is the index of the line that you want to simulate.
-    run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(28e-3,28e-3),inclination=30,channel_width = 10, frequency = 41, distance = 725.0)
+    i = 6  #H53  #this is the index of the line that you want to simulate.
+    run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(4e-3,4e-3),inclination=30,channel_width = 4, frequency = 41, distance = 5000.0,time_int = 18000,nx=Nx)
 
-    #i = 10  #H51  #this is the index of the line that you want to simulate.
-    #run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(2e-3,2e-3),inclination=60,channel_width = 10, frequency = 8)    
+    i = 10  #H102   #this is the index of the line that you want to simulate.
+    run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(4e-3,4e-3),inclination=30,channel_width = 4, frequency = 8, distance = 5000.0,time_int = 18000,nx=Nx)    
     
-    #for i in [1,2,3,4]:
-     #s   run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(2e-3,2e-3),inclination=60,channel_width = 10, frequency = 93)    
+    for i in [1,2,3,4]:  #H38,39,42,44
+        run_radmc(lines_df.iloc[i],GRID,finalprop,beam=(4e-3,4e-3),inclination=30,channel_width = 4, frequency = 93, distance = 5000.0,time_int = 18000,nx=Nx)    
 
 
 
