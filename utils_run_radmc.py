@@ -33,7 +33,7 @@ def vel2freq(vel,freq_0):
 
 #this is a copy of create full model
 #def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),noise_input_line = 17.29055e-6, noise_input_continuum = 0.13844e-6,inclination=60,channel_width_0=4,number_channels=20):
-def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 3600, inclination=60,channel_width=4,number_channels=20,distance = 725.,freefree=False):
+def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 3600, inclination = 30,channel_width=4,number_channels=30,distance = 725.,nx = 500):
     '''
     vel_region in km/s
     noise in Jy/beam
@@ -68,21 +68,13 @@ def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 36
     #********************
     print ("################ Writing for RADMC-3D ####################")
     A = rt.Radmc3dDefaults(GRID)
-    if freefree==True:
-        print ("Running free-free ")
-        A.freefree(prop)
-    else:
-        print ("Running recomlines")
-        A.recomblines(prop, [n_sup,n_inf], kwargs_control = {'userdef_nonlte': 1}) #Writing prop with radmc3d format, non-LTE
+    #print ("Running recomlines")
+    A.recomblines(prop, [n_sup,n_inf], kwargs_control = {'userdef_nonlte': 1}) #Writing prop with radmc3d format, non-LTE
 
-    ########################################## RADIATIVE TRANSFER WITH RADMC-3D ####################################
-    if freefree == True:
-        radmc_freefree = os.path.join(radmc_path, 'radmc3d')
-        subprocess.run()    
-    else:
-        radmc_rl = os.path.join(radmc_path, 'radmc3d')
-        ##### JAQUEZ H38_\alpha -> 2600.6855 microns
-        subprocess.run(radmc_rl+' setthreads 12 image lambdarange {} {} nlam {} incl {} npix 221 sizeau 550'.format(wave_range[0],wave_range[1],number_channels,str(i)), shell=True, executable='/bin/bash') 
+    ########################################## RADIATIVE TRANSFER WITH RADMC-3D ####################################   
+    radmc_rl = os.path.join(radmc_path, 'radmc3d')
+    ##### JAQUEZ H38_\alpha -> 2600.6855 microns
+    subprocess.run(radmc_rl+' image lambdarange {} {} nlam {} incl {} npix {} sizeau 550'.format(wave_range[0],wave_range[1],number_channels,str(i),nx), shell=True, executable='/bin/bash') 
      
     ################################### CONVOLUTION AND CONTINUUM SUBTRACTION ######################################
     # Use radmc3dpy to write fits file
@@ -128,11 +120,11 @@ def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 36
     #Noise calculation
     #------  noises
     #continuum 
-    a_cont,b_cont,c_cont = sigma_ps_fn("main+lba",  freq=frequency,type_cal = 'continuum', theta=beam[0],t_int=time_int, delta_v=channel_width*1e3, verbose=True )
+    a_cont,b_cont,c_cont = sigma_ps_fn("main",  freq=frequency,type_cal = 'continuum', theta=beam[0],t_int=time_int, delta_v=channel_width*1e3, verbose=True )
     noise_input_continuum = a_cont[1]*1e-6   #Jy/beam  #original in uJy/beam
     print ("the continuum noise = {}".format(noise_input_continuum))
     #line
-    a_line,b_line,c_line = sigma_ps_fn("main+lba",  freq=frequency, type_cal = 'line', theta=beam[0],t_int=time_int, delta_v=channel_width*1e3, verbose=True )
+    a_line,b_line,c_line = sigma_ps_fn("main",  freq=frequency, type_cal = 'line', theta=beam[0],t_int=time_int, delta_v=channel_width*1e3, verbose=True )
     noise_input_line = a_line[1]*1e-6     #Jy/beam  #original in uJy/beam
     print ("the line noise = {}".format(noise_input_line))
     #a[0] = ""#frequency
