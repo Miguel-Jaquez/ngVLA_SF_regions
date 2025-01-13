@@ -11,7 +11,8 @@ import numpy as np
 from scipy.interpolate import PPoly,BSpline,CubicSpline
 
 #master_path = '/home/jesus/Documents/paper2/ngVLA_SF_regions/'
-master_path = '/fs/posgrado30/other0/jesus/paper2/ngVLA_SF_regions/'
+#master_path = '/fs/posgrado30/other0/jesus/paper2/ngVLA_SF_regions/'
+master_path = '/share/Part1/jesus/SF_regions/utils/'
 ## &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&    
 ## 
 ## Function to calculate sensitivity of a subarray

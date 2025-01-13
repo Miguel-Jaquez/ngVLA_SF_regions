@@ -7,62 +7,77 @@ import time
 import astropy.units as asu
 import astropy.constants as cts
 import pandas as pd
+######
+# Import sf3dmodels 
+import sys
+#sys.path.append('/home/roberto/myscisoft/sf3dmodels')
+sys.path.append('/fs/posgrado30/other0/opt/star-forming-regions')
+######
+# import sf3dmodels # no se si se usa esta libreria
 from sf3dmodels import Model, Plot_model
 from sf3dmodels import Resolution as Res
 import sf3dmodels.utils.units as u
 import sf3dmodels.utils.constants as ct
 import sf3dmodels.rt as rt
-import sys
-sys.path.append('/fs/posgrado30/other0/opt/star-forming-regions')
-import sf3dmodels
+sys.path.append('/fs/posgrado30/other0/jesus/radmc3dPy/lib/python3.9/site-packages')
+import radmc3dPy
+#sys.path.append('/home/roberto/myscisoft/radmc3dPy/lib/python3.9/site-packages')
+#sys.path.append('/home/roberto/myscisoft/radmc3dPy-0.30.2')
+import radmc3dPy.image as image
+
 import astropy.wcs as wcs
 from astropy.io import fits
 from astropy.coordinates import SkyCoord
 from astropy.convolution import convolve, convolve_fft, Gaussian2DKernel
-from spectral_cube import SpectralCube
-from pvextractor import extract_pv_slice, Path, PathFromCenter
-import radmc3dPy.image as image
+#from spectral_cube import SpectralCube
+#from pvextractor import extract_pv_slice, Path, PathFromCenter
 from plot_helpers import plot_1d_props
 #for the noise 
+sys.path.append('/share/Part1/jesus/SF_regions/utils')
 from ngVLA_sensitivity_calculator import *
 
+######## radio velocity to frequency definition
 def freq2vel(freq, freq_0):
     return (freq_0 - freq) * (cts.c.cgs.to(asu.km/asu.s)) / freq_0
 def vel2freq(vel,freq_0):
     return freq_0 * (1.-(vel/(cts.c.cgs.to(asu.km/asu.s))))
 
+t0 = time.time()
 #this is a copy of create full model
-#def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),noise_input_line = 17.29055e-6, noise_input_continuum = 0.13844e-6,inclination=60,channel_width_0=4,number_channels=20):
-def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 3600, inclination = 30,channel_width=4,number_channels=30,distance = 725.,nx = 500):
+def run_radmc(line_prop,GRID,prop,model='jet',beam=(2e-3,2e-3),frequency = 93, time_int = 3600, inclination=60,channel_width_vel=30,number_channels=40,distance = 725.,npix = 1080,size_region=300):
     '''
+    beam       in mas
     vel_region in km/s
-    noise in Jy/beam
-    distance in pc
+    noise      in Jy/beam
+    distance   in pc
+    time_int   in seconds
+    channel_width in km/s
+    size_region  in au
     '''
-    t0 = time.time()
-    #radmc_path = "/home/jesus/radmc-3d/version_0.40/examples/run_recomblines_userdef"
+    ### change to the correct path in your computer
+    print(npix)
     radmc_path = "/fs/posgrado30/other0/jesus/radmc-3d/version_0.40/examples/run_recomblines_userdef"
+    #radmc_path = "/home/roberto/myscisoft/radmc-3d/version_0.40/examples/run_recomblines_userdef"
     #-------------------------------
     n_sup = line_prop["nsup"]
     n_inf = line_prop["ninf"]
     line_freq = line_prop["Frequency_radmc"]
-    #print ("control: velocity line", freq2vel(line_freq,line_freq))
-    channel_width_vel = channel_width * asu.km/asu.s
-    channel_width_freq_0 = vel2freq(channel_width_vel,line_freq*asu.Hz)
+
+    channel_width_velocity = channel_width_vel * asu.km/asu.s
+    channel_width_freq_0 = vel2freq(channel_width_velocity,line_freq*asu.Hz)
     channel_width_freq = line_freq*asu.Hz - channel_width_freq_0 
-    print ("channel width {} or {}".format(channel_width_vel, channel_width_freq.to(asu.MHz)))
-    freq_ini = line_freq*asu.Hz - (channel_width_freq)*(number_channels/2)
-    freq_fin = line_freq*asu.Hz + (channel_width_freq)*(number_channels/2)
+    print ("channel width {} km/s or {} MHz".format(channel_width_velocity, channel_width_freq.to(asu.MHz)))
+    freq_ini = line_freq*asu.Hz - ((channel_width_freq)*(number_channels/2))
+    freq_fin = line_freq*asu.Hz + ((channel_width_freq)*(number_channels/2))
     print ("{:.7e}, {:.7e}".format(freq_ini,freq_fin))
-    line_wave = (line_prop["Frequency_radmc"]*asu.Hz).to(asu.micron, equivalencies=asu.spectral())
+    #line_wave = (line_prop["Frequency_radmc"]*asu.Hz).to(asu.micron, equivalencies=asu.spectral())
     #print (line_wave)
     wave_ini = freq_fin.to(asu.micron, equivalencies=asu.spectral())
     wave_fin = freq_ini.to(asu.micron, equivalencies=asu.spectral())
     wave_range=[abs(wave_ini.value),abs(wave_fin.value)]
-    print (wave_ini,wave_fin)
+    print ("the wave range is {} to {} microns".format(wave_ini,wave_fin))
     #--------------------------------
-    i = inclination #53
-    #print (wave_range)  #control
+    i = inclination #30
     #********************
     #WRITING FOR RADMC-3D
     #********************
@@ -74,11 +89,11 @@ def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 36
     ########################################## RADIATIVE TRANSFER WITH RADMC-3D ####################################   
     radmc_rl = os.path.join(radmc_path, 'radmc3d')
     ##### JAQUEZ H38_\alpha -> 2600.6855 microns
-    subprocess.run(radmc_rl+' image lambdarange {} {} nlam {} incl {} npix {} sizeau 550'.format(wave_range[0],wave_range[1],number_channels,str(i),nx), shell=True, executable='/bin/bash') 
+    subprocess.run(radmc_rl+' image lambdarange {} {} nlam {} incl {} npix {} sizeau {}'.format(wave_range[0],wave_range[1],number_channels,str(i),npix,size_region), shell=True, executable='/bin/bash') 
      
     ################################### CONVOLUTION AND CONTINUUM SUBTRACTION ######################################
     # Use radmc3dpy to write fits file
-    output = 'img_rl_disk_H{}.fits'.format(n_inf)
+    output = 'img_rl_{}_H{}.fits'.format(model,n_inf)
     #subprocess.call(['rm',output], shell=True)
     os.system('rm -f '+output)
     dist = distance #725.   #49000 = nube de magallanes
@@ -86,7 +101,8 @@ def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 36
     #data = im.image #Accessing image data
     #plt.imshow(data[:,:,29], origin='lower', cmap='cool') #plotting a single channel
     #plt.show()
-    im.writeFits(fname=output, dpc=dist, coord='18h10m28.652s -19d55m49.66s') #writting 3d fits cube
+
+    im.writeFits(fname=output, dpc=dist, coord='18h00m00.0s +25d00m00.00s') #writting 3d fits cube
         
     #fix header of fits file written by radmc3dpy
     hdul = fits.open(output, mode='update')
@@ -112,27 +128,26 @@ def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 36
             for y in range(data.shape[1]):
                 data_line[slide,y,x] = data[slide,y,x] - data[:,y,x].min()
                 data_cont[slide,y,x] = data[:,y,x].min()
-    csub_image = 'img_rl_disk_line_H{}.fits'.format(n_inf)
-    cont_image = 'img_rl_disk_cont_H{}.fits'.format(n_inf)
+    csub_image = 'img_rl_{}_line_H{}.fits'.format(model,n_inf)
+    cont_image = 'img_rl_{}_cont_H{}.fits'.format(model,n_inf)
     fits.writeto(csub_image,data_line,hdul[0].header,overwrite=True)
     fits.writeto(cont_image,data_cont,hdul[0].header,overwrite=True)	#QZ
     ############--------------------------##############
     #Noise calculation
     #------  noises
-    #continuum 
-    a_cont,b_cont,c_cont = sigma_ps_fn("main",  freq=frequency,type_cal = 'continuum', theta=beam[0],t_int=time_int, delta_v=channel_width*1e3, verbose=True )
+    #continuum for now the noise is in the entire bandwidth 20GHz
+    a_cont,b_cont,c_cont = sigma_ps_fn("main",  freq=frequency,type_cal = 'continuum', theta=beam[0],t_int=time_int, verbose=True )
     noise_input_continuum = a_cont[1]*1e-6   #Jy/beam  #original in uJy/beam
     print ("the continuum noise = {}".format(noise_input_continuum))
     #line
-    a_line,b_line,c_line = sigma_ps_fn("main",  freq=frequency, type_cal = 'line', theta=beam[0],t_int=time_int, delta_v=channel_width*1e3, verbose=True )
+    a_line,b_line,c_line = sigma_ps_fn("main",  freq=frequency, type_cal = 'line', theta=beam[0],t_int=time_int, delta_v=channel_width_vel*1e3, verbose=True )
     noise_input_line = a_line[1]*1e-6     #Jy/beam  #original in uJy/beam
     print ("the line noise = {}".format(noise_input_line))
     #a[0] = ""#frequency
     #a[1] is the simga_rms
     #a[2] is the T_rms
     #### end: Noise calculation
-    
-    
+
     ########################    convolution and add noise
     print('\n')  
     print('Starting full image convolution (convl_csub.py)')
@@ -149,7 +164,7 @@ def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 36
     hdul[0].header['BMAJ']= new_beam/3600
     hdul[0].header['BPA']= 0
     hdul[0].header['BUNIT']= 'JY/BEAM'
-    convl_image = 'img_rl_disk_convl_H{}_control.fits'.format(n_inf)
+    convl_image = 'img_rl_{}_convl_H{}_control.fits'.format(model,n_inf)
     fits.writeto(convl_image,convl_data,hdul[0].header,overwrite=True)
     
     
@@ -158,7 +173,7 @@ def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 36
     #------------------------------------------------------------------------------
     print('\n')  
     print('Starting line cube convolution and adding noise (convl_csub.py)')
-    convl_csub_image = 'img_rl_disk_line_convl_H{}.fits'.format(n_inf)
+    convl_csub_image = 'img_rl_{}_line_convl_H{}.fits'.format(model,n_inf)
     hdul = fits.open(csub_image)
     new_beam = beam[0] #arcsec = 2 mas  
     npixsigma = (1/2.3548)*(new_beam/(3600*hdul[0].header['CDELT2']))
@@ -188,7 +203,7 @@ def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 36
     print('\n')
     print('Continuum +noise image (convl_csub.py)')
 
-    convl_c_image = 'img_rl_disk_cont_convl_H{}.fits'.format(n_inf)	#QZ
+    convl_c_image = 'img_rl_{}_cont_convl_H{}.fits'.format(model,n_inf)	#QZ
     hdul = fits.open(cont_image)
     new_beam = beam[0] #arcsec
     npixsigma = (1/2.3548)*(new_beam/(3600*hdul[0].header['CDELT2']))
@@ -209,7 +224,7 @@ def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 36
     hdul[0].header['BMAJ']= new_beam/3600
     hdul[0].header['BPA']= 0
     hdul[0].header['BUNIT']= 'JY/BEAM'
-    fits.writeto(convl_c_image,convl_data,hdul[0].header,overwrite=True)
+    fits.writeto(convl_c_image,convl_data_noise,hdul[0].header,overwrite=True)
     hdul.close()
 
     print('\n')
@@ -217,4 +232,3 @@ def run_radmc(line_prop,GRID,prop,beam=(2e-3,2e-3),frequency = 93, time_int = 36
     print ('Ellapsed time for run RADMC: %.3fs' % (time.time() - t0))
     print ('-------------------------------------------------\n-------------------------------------------------\n')
     ###########################################################################################################
-### agregar si queremos que saque las imagenes sin ruido
