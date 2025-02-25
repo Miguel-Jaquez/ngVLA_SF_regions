@@ -22,7 +22,6 @@ else:
     ### import utils folder to run radmc
     sys.path.append("/fs/posgrado30/other0/jesus/respaldo_paper2/utils")
     lines_properties_file = "/fs/posgrado30/other0/jesus/respaldo_paper2/ngVLA_SF_regions/Hydrogen_recom_lines_in_use.csv"
-from utils_run_radmc import * # this run radmc
 ##------
 # import modules
 #----------------
