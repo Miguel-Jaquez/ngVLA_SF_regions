@@ -11,8 +11,11 @@ if myhost == 'posgrado30.crya.privado':
     sys.path.append('/fs/posgrado30/other0/opt/star-forming-regions')
     sys.path.append('/fs/posgrado30/other0/jesus/radmc3dPy/lib/python3.9/site-packages')
     ### import utils folder to run radmc
+    radmc_path = "/fs/posgrado30/other0/jesus/radmc-3d/version_0.40/examples/run_recomblines_userdef"
     sys.path.append("/fs/posgrado30/other0/jesus/respaldo_paper2/utils")
     lines_properties_file = "/fs/posgrado30/other0/jesus/respaldo_paper2/ngVLA_SF_regions/Hydrogen_recom_lines_in_use.csv"
+    # import ngVLA calculator
+    sys.path.append("../../ngvla_sensitivity_calculator_master")
 else:
     ### import sf3dmodels path
     sys.path.append('/fs/posgrado30/other0/opt/star-forming-regions')
@@ -22,7 +25,10 @@ else:
     ### import utils folder to run radmc
     sys.path.append("/fs/posgrado30/other0/jesus/respaldo_paper2/utils")
     lines_properties_file = "/fs/posgrado30/other0/jesus/respaldo_paper2/ngVLA_SF_regions/Hydrogen_recom_lines_in_use.csv"
-from utils_run_radmc import * # this run radmc
+
+### import ngVLA noise calculator
+from ngVLA_sensitivity_calculator import *
+
 ##------
 # import modules
 #----------------
@@ -55,7 +61,7 @@ import time
 import astropy.units as asu
 import astropy.constants as cts
 import pandas as pd
-radmc_path = "/fs/posgrado30/other0/jesus/radmc-3d/version_0.40/examples/run_recomblines_userdef"
+
 
 
 #read the lines properties to run RADMC
@@ -100,11 +106,10 @@ hdul = fits.open(output)
 data = hdul[0].data  #units of Jy/pix  #output from radmc
 data_line = data.copy()
 data_cont = data.copy()
+min_values_per_pixel = np.min(data,axis=0) #Ya prove que esto si funcione bien
 for slide in range(data.shape[0]):
-    for x in range(data.shape[2]):
-        for y in range(data.shape[1]):
-            data_line[slide,y,x] = data[slide,y,x] - data[:,y,x].min()
-            data_cont[slide,y,x] = data[:,y,x].min()
+    data_line[slide,y,x] = data[slide,y,x] - min_values_per_pixel
+    data_cont[slide,y,x] = min_values_per_pixel
 csub_image = 'img_rl_{}_line_H{}_{}pc.fits'.format('disk','H38',distance)
 cont_image = 'img_rl_{}_cont_H{}_{}pc.fits'.format('disk','H38',distance)
 fits.writeto(csub_image,data_line,hdul[0].header,overwrite=True)
@@ -138,14 +143,20 @@ gauss_kernel = Gaussian2DKernel(npixsigma)
 pixperbeam = 1.442*(np.pi/4)*(new_beam**2)/((3600*hdul[0].header['CDELT2'])**2)
 convl_data = hdul[0].data.copy()
 convl_data_noise = hdul[0].data.copy()
+
+# PSF convolved
 for element in range(hdul[0].data.shape[0]):
-    convl_data[element,:,:] = pixperbeam*convolve(data_line[element,:,:],gauss_kernel)
-    #add the noise after convolution
+        fft_mp = lambda a: scipy.fft.fftn(a, workers=-1)  # use all available cores
+        ifft_mp = lambda a: scipy.fft.ifftn(a, workers=-1)
+        convl_data[element,:,:] = pixperbeam*convolve_fft(data_line[element,:,:],gauss_kernel, fftn=fft_mp, ifftn=ifft_mp)
+        #add the noise after convolutio
 #adding noise
 for element in range(hdul[0].data.shape[0]):
-    for x in range(hdul[0].data.shape[2]):
-        for y in range(hdul[0].data.shape[1]):
-            convl_data_noise[element,y,x] = convl_data[element,y,x] + np.random.normal(0,scale=noise_input_line) #Jy/beam
+    convl_data_noise[element,:,:] = convl_data[element,:,:] + np.random.normal(0,scale=noise_input_line, size=(hdul[0].data.shape[1],hdul[0].data.shape[2])) #Jy/beam
+
+    #for x in range(hdul[0].data.shape[2]):
+     #   for y in range(hdul[0].data.shape[1]):
+      #      convl_data_noise[element,y,x] = convl_data[element,y,x] + np.random.normal(0,scale=noise_input_line) #Jy/beam
 
 hdul[0].header['BMIN']= new_beam/3600
 hdul[0].header['BMAJ']= new_beam/3600
