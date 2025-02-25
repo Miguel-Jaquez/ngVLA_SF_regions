@@ -307,4 +307,3 @@ Finally, a keplerian velocity is defined using the function: **vel = Model.veloc
 =======
 
 >>>>>>> d098ee7627bf923f50fb3f7341b9bb4167ec21de
-
