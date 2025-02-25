@@ -11,6 +11,7 @@ if myhost == 'posgrado30.crya.privado':
     sys.path.append('/fs/posgrado30/other0/opt/star-forming-regions')
     sys.path.append('/fs/posgrado30/other0/jesus/radmc3dPy/lib/python3.9/site-packages')
     ### import utils folder to run radmc
+    radmc_path = "/fs/posgrado30/other0/jesus/radmc-3d/version_0.40/examples/run_recomblines_userdef"
     sys.path.append("/fs/posgrado30/other0/jesus/respaldo_paper2/utils")
     lines_properties_file = "/fs/posgrado30/other0/jesus/respaldo_paper2/ngVLA_SF_regions/Hydrogen_recom_lines_in_use.csv"
 else:
@@ -22,7 +23,7 @@ else:
     ### import utils folder to run radmc
     sys.path.append("/fs/posgrado30/other0/jesus/respaldo_paper2/utils")
     lines_properties_file = "/fs/posgrado30/other0/jesus/respaldo_paper2/ngVLA_SF_regions/Hydrogen_recom_lines_in_use.csv"
-from utils_run_radmc import * # this run radmc
+
 ##------
 # import modules
 #----------------
@@ -55,7 +56,7 @@ import time
 import astropy.units as asu
 import astropy.constants as cts
 import pandas as pd
-radmc_path = "/fs/posgrado30/other0/jesus/radmc-3d/version_0.40/examples/run_recomblines_userdef"
+
 
 
 
