@@ -10,8 +10,8 @@ import argparse
 import numpy as np
 from scipy.interpolate import PPoly,BSpline,CubicSpline
 
-
-
+#master_path = '/home/jesus/Documents/paper2/ngVLA_SF_regions/'
+master_path = '../../ngvla_sensitivity_calculator_master/'
 ## &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&    
 ## 
 ## Function to calculate sensitivity of a subarray
@@ -116,18 +116,18 @@ def sigma_ps_fn( subarray = 'core', freq = -1, type_cal = 'continuum', \
         sys.exit(0)
         
     try:
-        with open( 'receiver_data.pkl','rb') as in1:
+        with open( master_path + 'receiver_data.pkl','rb') as in1:
             receiver_data = pickle.load(in1)                           
     except:
-        with open( 'receiver_data.pkl','rb') as in1:
+        with open( master_path + 'receiver_data.pkl','rb') as in1:
             receiver_data = pickle.load(in1,encoding='latin1')                           
 
 
     try:
-        with open( 'subarray_data.pkl','rb') as in1:
+        with open( master_path + 'subarray_data.pkl','rb') as in1:
             subarray_parameter_data = pickle.load(in1)                           
     except:
-        with open( 'subarray_data.pkl','rb') as in1:
+        with open( master_path + 'subarray_data.pkl','rb') as in1:
             subarray_parameter_data = pickle.load(in1,encoding='latin1')                                   
     
     try:
